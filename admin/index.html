@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yokocho Admin</title>
+    <style>
+        :root {
+            --bg-cream: #FAF8F5;
+            --bg-warm: #F5F0E8;
+            --text-dark: #3D3D3D;
+            --text-soft: #6B6B6B;
+            --accent-coral: #E8A598;
+            --accent-sage: #A8C5A8;
+            --shadow-soft: rgba(61, 61, 61, 0.08);
+            --shadow-medium: rgba(61, 61, 61, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--shadow-medium);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .subtitle {
+            color: var(--text-soft);
+            margin-bottom: 30px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Forms */
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--bg-warm);
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-coral);
+        }
+
+        button {
+            background: var(--accent-coral);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-medium);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: var(--bg-warm);
+            color: var(--text-dark);
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 3px dashed var(--bg-warm);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--accent-coral);
+            background: rgba(232, 165, 152, 0.1);
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .drop-zone-text {
+            color: var(--text-soft);
+        }
+
+        /* File list */
+        .file-list {
+            background: var(--bg-warm);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+        }
+
+        .file-size {
+            color: var(--text-soft);
+            font-size: 0.8rem;
+        }
+
+        /* Status messages */
+        .status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status.error {
+            background: #FFE5E5;
+            color: #C53030;
+        }
+
+        .status.success {
+            background: #E5FFE5;
+            color: #2F855A;
+        }
+
+        .status.info {
+            background: #E5F0FF;
+            color: #2B6CB0;
+        }
+
+        /* Progress */
+        .progress-bar {
+            background: var(--bg-warm);
+            border-radius: 8px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--accent-coral);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Settings section */
+        .settings-section {
+            border-top: 1px solid var(--bg-warm);
+            margin-top: 30px;
+            padding-top: 20px;
+        }
+
+        .settings-section h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .token-display {
+            font-family: monospace;
+            background: var(--bg-warm);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Password Screen -->
+    <div class="container" id="password-screen">
+        <h1>Yokocho Admin</h1>
+        <p class="subtitle">Enter password to continue</p>
+        <div id="password-error" class="status error hidden"></div>
+        <form id="password-form">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter admin password" required>
+            <button type="submit">Enter</button>
+        </form>
+    </div>
+
+    <!-- Setup Screen (GitHub Token) -->
+    <div class="container hidden" id="setup-screen">
+        <h1>First Time Setup</h1>
+        <p class="subtitle">You need a GitHub Personal Access Token to upload games</p>
+        <div class="status info">
+            <strong>How to get a token:</strong><br>
+            1. Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)<br>
+            2. Generate new token with <strong>repo</strong> scope<br>
+            3. Copy and paste it below
+        </div>
+        <form id="token-form">
+            <label for="github-token">GitHub Token</label>
+            <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx" required>
+            <button type="submit">Save Token</button>
+        </form>
+    </div>
+
+    <!-- Main Admin Screen -->
+    <div class="container hidden" id="admin-screen">
+        <h1>Upload Game</h1>
+        <p class="subtitle">Add a new Godot game to Yokocho</p>
+
+        <div id="upload-status" class="status hidden"></div>
+        <div id="progress-container" class="hidden">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <form id="upload-form">
+            <label for="game-title">Game Title</label>
+            <input type="text" id="game-title" placeholder="My Awesome Game" required>
+
+            <label for="game-folder">Folder Name (no spaces)</label>
+            <input type="text" id="game-folder" placeholder="my-awesome-game" required pattern="[a-z0-9\-]+">
+
+            <label>Game Files (exported from Godot)</label>
+            <div class="drop-zone" id="drop-zone">
+                <div class="drop-zone-icon">📁</div>
+                <div class="drop-zone-text">
+                    Drag & drop exported files here<br>
+                    <small>or click to select files</small>
+                </div>
+                <input type="file" id="file-input" multiple hidden>
+            </div>
+
+            <div id="file-list" class="file-list hidden"></div>
+
+            <button type="submit" id="upload-btn" disabled>Upload Game</button>
+        </form>
+
+        <div class="settings-section">
+            <h3>Settings</h3>
+            <div class="token-display" id="token-display">Token: ••••••••</div>
+            <button class="secondary" id="clear-token-btn">Clear Token</button>
+            <button class="secondary" id="logout-btn" style="margin-left: 8px;">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const REPO_OWNER = 'kmoulder';
+        const REPO_NAME = 'yokocho-dev';
+        const BRANCH = 'master';
+        // Password hash (SHA-256 of password) - change this!
+        const PASSWORD_HASH = 'cbc3dd1962cf6d2c65958055fcb7e014de2db5463e5b4ecca3beb8429217b3fe';
+
+        // State
+        let selectedFiles = [];
+
+        // Elements
+        const passwordScreen = document.getElementById('password-screen');
+        const setupScreen = document.getElementById('setup-screen');
+        const adminScreen = document.getElementById('admin-screen');
+        const passwordForm = document.getElementById('password-form');
+        const tokenForm = document.getElementById('token-form');
+        const uploadForm = document.getElementById('upload-form');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadStatus = document.getElementById('upload-status');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+
+        // Check session
+        function init() {
+            if (sessionStorage.getItem('yokocho-auth')) {
+                showAdminOrSetup();
+            }
+        }
+
+        function showAdminOrSetup() {
+            passwordScreen.classList.add('hidden');
+            if (localStorage.getItem('yokocho-github-token')) {
+                setupScreen.classList.add('hidden');
+                adminScreen.classList.remove('hidden');
+                updateTokenDisplay();
+            } else {
+                setupScreen.classList.remove('hidden');
+            }
+        }
+
+        // Password handling
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const hash = await sha256(password);
+
+            // Simple check - in production you'd verify server-side
+            if (hash === PASSWORD_HASH || password === localStorage.getItem('yokocho-admin-password')) {
+                sessionStorage.setItem('yokocho-auth', 'true');
+                showAdminOrSetup();
+            } else {
+                document.getElementById('password-error').textContent = 'Incorrect password';
+                document.getElementById('password-error').classList.remove('hidden');
+            }
+        });
+
+        // Token handling
+        tokenForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const token = document.getElementById('github-token').value;
+            localStorage.setItem('yokocho-github-token', token);
+            setupScreen.classList.add('hidden');
+            adminScreen.classList.remove('hidden');
+            updateTokenDisplay();
+        });
+
+        function updateTokenDisplay() {
+            const token = localStorage.getItem('yokocho-github-token') || '';
+            document.getElementById('token-display').textContent =
+                `Token: ${token.substring(0, 7)}••••••••`;
+        }
+
+        document.getElementById('clear-token-btn').addEventListener('click', () => {
+            localStorage.removeItem('yokocho-github-token');
+            adminScreen.classList.add('hidden');
+            setupScreen.classList.remove('hidden');
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('yokocho-auth');
+            location.reload();
+        });
+
+        // File handling
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            renderFileList();
+            updateUploadButton();
+
+            // Auto-fill folder name from index.html if present
+            const indexFile = selectedFiles.find(f => f.name === 'index.html');
+            if (indexFile && !document.getElementById('game-folder').value) {
+                // Try to guess folder name from file path or leave empty
+            }
+        }
+
+        function renderFileList() {
+            if (selectedFiles.length === 0) {
+                fileList.classList.add('hidden');
+                return;
+            }
+
+            fileList.classList.remove('hidden');
+            fileList.innerHTML = selectedFiles.map(file => `
+                <div class="file-item">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formatSize(file.size)}</span>
+                </div>
+            `).join('');
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function updateUploadButton() {
+            const hasTitle = document.getElementById('game-title').value.trim();
+            const hasFolder = document.getElementById('game-folder').value.trim();
+            const hasFiles = selectedFiles.length > 0;
+            uploadBtn.disabled = !(hasTitle && hasFolder && hasFiles);
+        }
+
+        document.getElementById('game-title').addEventListener('input', updateUploadButton);
+        document.getElementById('game-folder').addEventListener('input', updateUploadButton);
+
+        // Auto-generate folder name from title
+        document.getElementById('game-title').addEventListener('input', (e) => {
+            const folderInput = document.getElementById('game-folder');
+            if (!folderInput.dataset.manual) {
+                folderInput.value = e.target.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '');
+            }
+            updateUploadButton();
+        });
+
+        document.getElementById('game-folder').addEventListener('input', (e) => {
+            e.target.dataset.manual = 'true';
+        });
+
+        // Upload handling
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await uploadGame();
+        });
+
+        async function uploadGame() {
+            const token = localStorage.getItem('yokocho-github-token');
+            const title = document.getElementById('game-title').value.trim();
+            const folder = document.getElementById('game-folder').value.trim();
+
+            showStatus('info', 'Starting upload...');
+            progressContainer.classList.remove('hidden');
+            uploadBtn.disabled = true;
+
+            try {
+                // 1. Upload each file
+                const totalFiles = selectedFiles.length;
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const progress = ((i + 1) / (totalFiles + 1)) * 100;
+                    progressFill.style.width = progress + '%';
+                    showStatus('info', `Uploading ${file.name}...`);
+
+                    const content = await fileToBase64(file);
+                    await uploadFile(token, `games/${folder}/${file.name}`, content);
+                }
+
+                // 2. Update games.json
+                showStatus('info', 'Updating game list...');
+                progressFill.style.width = '90%';
+                await updateGamesJson(token, title, folder);
+
+                progressFill.style.width = '100%';
+                showStatus('success', `Successfully uploaded "${title}"! It may take a minute for GitHub Pages to update.`);
+
+                // Clear form
+                document.getElementById('game-title').value = '';
+                document.getElementById('game-folder').value = '';
+                document.getElementById('game-folder').dataset.manual = '';
+                selectedFiles = [];
+                renderFileList();
+
+            } catch (error) {
+                console.error(error);
+                showStatus('error', `Upload failed: ${error.message}`);
+            } finally {
+                uploadBtn.disabled = false;
+                setTimeout(() => {
+                    progressContainer.classList.add('hidden');
+                    progressFill.style.width = '0%';
+                }, 2000);
+            }
+        }
+
+        async function uploadFile(token, path, contentBase64) {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
+
+            // Check if file exists (to get SHA for update)
+            let sha;
+            try {
+                const existing = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (existing.ok) {
+                    const data = await existing.json();
+                    sha = data.sha;
+                }
+            } catch (e) {}
+
+            const body = {
+                message: `Add ${path}`,
+                content: contentBase64,
+                branch: BRANCH
+            };
+            if (sha) body.sha = sha;
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to upload file');
+            }
+        }
+
+        async function updateGamesJson(token, title, folder) {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/games.json`;
+
+            // Get current games.json
+            const response = await fetch(url, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+
+            let games = { games: [] };
+            let sha;
+
+            if (response.ok) {
+                const data = await response.json();
+                sha = data.sha;
+                const content = atob(data.content);
+                games = JSON.parse(content);
+            }
+
+            // Check if game already exists
+            const existingIndex = games.games.findIndex(g => g.folder === folder);
+            if (existingIndex >= 0) {
+                games.games[existingIndex] = { title, folder, description: '' };
+            } else {
+                games.games.push({ title, folder, description: '' });
+            }
+
+            // Upload updated games.json
+            const newContent = btoa(JSON.stringify(games, null, 4));
+            const body = {
+                message: `Add game: ${title}`,
+                content: newContent,
+                branch: BRANCH
+            };
+            if (sha) body.sha = sha;
+
+            const updateResponse = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!updateResponse.ok) {
+                const error = await updateResponse.json();
+                throw new Error(error.message || 'Failed to update games.json');
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showStatus(type, message) {
+            uploadStatus.className = `status ${type}`;
+            uploadStatus.textContent = message;
+            uploadStatus.classList.remove('hidden');
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Init
+        init();
+    </script>
+</body>
+</html>
