@@ -574,12 +574,17 @@
                 games = JSON.parse(content);
             }
 
+            // Find the HTML entry point from uploaded files
+            const htmlFile = selectedFiles.find(f => f.name.endsWith('.html'));
+            const entry = htmlFile ? htmlFile.name : 'index.html';
+
             // Check if game already exists
             const existingIndex = games.games.findIndex(g => g.folder === folder);
+            const gameData = { title, folder, entry, description: '' };
             if (existingIndex >= 0) {
-                games.games[existingIndex] = { title, folder, description: '' };
+                games.games[existingIndex] = gameData;
             } else {
-                games.games.push({ title, folder, description: '' });
+                games.games.push(gameData);
             }
 
             // Upload updated games.json

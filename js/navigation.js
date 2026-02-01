@@ -138,7 +138,9 @@ class GameArcade {
     loadGame(game) {
         // Create iframe to load the game
         const iframe = document.createElement('iframe');
-        iframe.src = `games/${game.folder}/index.html`;
+        // Use custom entry point if specified, otherwise try index.html
+        const entryPoint = game.entry || 'index.html';
+        iframe.src = `games/${game.folder}/${entryPoint}`;
         iframe.allow = 'fullscreen; autoplay';
         iframe.title = game.title;
 
